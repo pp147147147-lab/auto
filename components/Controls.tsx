@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Calendar, Users, Calculator, ChevronDown, ChevronUp, Printer, Trash2, PenTool, Eraser, MousePointer2, Download, Upload } from 'lucide-react';
-import { SchedulingConfig, ThursdayScenario, Employee, ShiftSymbol, Tool, BackupData } from '../types';
+import { Settings, Calendar, Users, Calculator, ChevronDown, ChevronUp, Printer, Trash2, PenTool, Eraser, RotateCcw, MousePointer2, Download, Upload } from 'lucide-react';
+import { SchedulingConfig, ThursdayScenario, Employee, ShiftSymbol, Tool, ShiftType, BackupData } from '../types';
 import { SCENARIO_DESCRIPTIONS, CELL_STYLES, TARGET_MULTIPLIER } from '../constants';
 import { getMonthlySpecialHolidays } from '../services/scheduleGenerator';
 
@@ -22,7 +22,6 @@ interface ControlsProps {
   onOpenClearModal: () => void;
   activeScenario?: ThursdayScenario;
   usedTuesdayReduction?: boolean;
-  // This prop allows the App to pass the import handler
   onImport?: (data: BackupData) => void;
 }
 

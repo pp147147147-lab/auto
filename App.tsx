@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Controls from './components/Controls';
 import RosterTable from './components/RosterTable';
 import ClearModal from './components/ClearModal';
-import { SchedulingConfig, Employee, ThursdayScenario, Tool, ShiftType, ShiftSymbol, BackupData } from './types';
+import { SchedulingConfig, Employee, ThursdayScenario, Tool, ShiftType, ShiftSymbol } from './types';
 import { generateSchedule, calculateBaseTarget, validateSchedule, recalculateEmployeeStats, calculateOverviewStats } from './services/scheduleGenerator';
 import { AlertCircle } from 'lucide-react';
 
@@ -161,31 +161,6 @@ const App: React.FC = () => {
       }
   };
 
-  const handleImport = (data: BackupData) => {
-      if (confirm('匯入將會覆蓋目前的排班資料，確定要繼續嗎？')) {
-          if (data.config) {
-             const loadedConfig = data.config;
-             if (loadedConfig.jan1WorkDay === undefined) loadedConfig.jan1WorkDay = false;
-             setConfig(loadedConfig);
-          }
-          
-          if (data.employees) {
-             // Ensure manualEntries object exists even if missing in old files
-             const safeEmployees = data.employees.map((e: any) => ({
-                 ...e,
-                 manualEntries: e.manualEntries || {}
-             }));
-             setEmployees(safeEmployees); 
-          }
-          
-          if (data.stats) setStats(data.stats);
-          if (data.activeThursdayScenario) setActiveThursdayScenario(data.activeThursdayScenario);
-          if (data.usedTuesdayReduction !== undefined) setUsedTuesdayReduction(data.usedTuesdayReduction);
-          
-          setGridKey(prev => prev + 1); // Force redraw
-      }
-  };
-
   const handleCellClick = (empIndex: number, day: number, shiftClicked?: ShiftType) => {
       const dateKey = `${config.year}-${config.month}-${day}`;
       const newEmployees = [...employees];
@@ -289,7 +264,6 @@ const App: React.FC = () => {
         onOpenClearModal={() => setIsClearModalOpen(true)}
         activeScenario={activeThursdayScenario}
         usedTuesdayReduction={usedTuesdayReduction}
-        onImport={handleImport}
       />
       
       <ClearModal 

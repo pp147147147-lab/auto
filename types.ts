@@ -67,7 +67,6 @@ export interface ScheduleResult {
   usedTuesdayReduction: boolean;
 }
 
-// Data structure for Export/Import
 export interface BackupData {
   config: SchedulingConfig;
   employees: Employee[];
