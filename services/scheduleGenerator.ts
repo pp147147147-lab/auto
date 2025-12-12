@@ -660,7 +660,9 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
         
         // Dynamic Stop logic - Only apply if strict standard A=5
         if (!isCriticalDay && numABC === 5 && candidatesABC.length === 5) {
-            if (candidatesABC[4].deficit <= 0) candidatesABC.pop();
+            // Fix for TS2532: Safely check deficit
+            const candidate = candidatesABC[4];
+            if (candidate && (candidate.deficit ?? 0) <= 0) candidatesABC.pop();
         }
 
         applyShifts(employees, candidatesABC, dateKey, ['A', 'B', 'C'], 3);
@@ -671,7 +673,9 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
         let candidatesBC = pickBestCandidates(poolForBC, numBC, 2, baseTarget);
         
         if (!isCriticalDay && numBC === 5 && candidatesBC.length === 5) {
-            if (candidatesBC[4].deficit <= 0) candidatesBC.pop();
+            // Fix for TS2532: Safely check deficit
+            const candidate = candidatesBC[4];
+            if (candidate && (candidate.deficit ?? 0) <= 0) candidatesBC.pop();
         }
 
         applyShifts(employees, candidatesBC, dateKey, ['B', 'C'], 2);

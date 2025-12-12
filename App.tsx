@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import Controls from './Controls';
-import RosterTable from './RosterTable';
-import ClearModal from './ClearModal';
+import Controls from './components/Controls';
+import RosterTable from './components/RosterTable';
+import ClearModal from './components/ClearModal';
 import { SchedulingConfig, Employee, ThursdayScenario, Tool, ShiftType, ShiftSymbol, BackupData } from './types';
-import { generateSchedule, calculateBaseTarget, validateSchedule, recalculateEmployeeStats, calculateOverviewStats } from './scheduleGenerator';
+import { generateSchedule, calculateBaseTarget, validateSchedule, recalculateEmployeeStats, calculateOverviewStats } from './services/scheduleGenerator';
 import { AlertCircle } from 'lucide-react';
 
 const STORAGE_KEY = 'shiftflow_data_v1';
