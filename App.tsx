@@ -134,6 +134,8 @@ const App: React.FC = () => {
                   delete newShifts[key];
                   delete newManualEntries[key];
               } else if (mode === 'generated') {
+                  // Only delete if it's an array (shifts) AND NOT marked as manual
+                  // This ensures manually entered A/B/C shifts (which have isManual=true) are PRESERVED
                   if (Array.isArray(cellValue) && !isManual) {
                       delete newShifts[key];
                   }
