@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Settings, Calendar, Users, Calculator, ChevronDown, ChevronUp, Printer, Trash2, PenTool, Eraser, RotateCcw, MousePointer2, Download, Upload } from 'lucide-react';
-import { SchedulingConfig, ThursdayScenario, Employee, ShiftSymbol, Tool, ShiftType, BackupData } from '../types';
+import { Settings, Calendar, Users, Calculator, ChevronDown, ChevronUp, Printer, Trash2, PenTool, Eraser, RotateCcw, MousePointer2 } from 'lucide-react';
+import { SchedulingConfig, ThursdayScenario, Employee, ShiftSymbol, Tool, ShiftType } from '../types';
 import { SCENARIO_DESCRIPTIONS, CELL_STYLES, TARGET_MULTIPLIER } from '../constants';
 import { getMonthlySpecialHolidays } from '../services/scheduleGenerator';
 
@@ -22,12 +22,11 @@ interface ControlsProps {
   onOpenClearModal: () => void;
   activeScenario?: ThursdayScenario;
   usedTuesdayReduction?: boolean;
-  onImport?: (data: BackupData) => void;
 }
 
 const Controls: React.FC<ControlsProps> = ({ 
     config, setConfig, employees, setEmployees, onGenerate, baseTarget, stats,
-    selectedSymbol, setSelectedSymbol, onOpenClearModal, activeScenario, usedTuesdayReduction, onImport
+    selectedSymbol, setSelectedSymbol, onOpenClearModal, activeScenario, usedTuesdayReduction
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const monthlyHolidays = getMonthlySpecialHolidays(config.year, config.month, config.jan1WorkDay);
@@ -68,50 +67,6 @@ const Controls: React.FC<ControlsProps> = ({
       window.print();
   };
 
-  const handleExport = () => {
-    const data: BackupData = {
-      config,
-      employees,
-      stats,
-      activeThursdayScenario: activeScenario,
-      usedTuesdayReduction: usedTuesdayReduction,
-      version: '1.0',
-      timestamp: Date.now()
-    };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ShiftFlow_Backup_${config.year}_${config.month + 1}_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImportClick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-        if (!json.employees || !json.config) {
-            alert('檔案格式錯誤：缺少必要資料');
-            return;
-        }
-        if (onImport) onImport(json);
-      } catch (err) {
-        alert('檔案讀取失敗，請確認是否為有效的 JSON 檔');
-      }
-    };
-    reader.readAsText(file);
-    // Reset input so same file can be selected again
-    e.target.value = '';
-  };
-
   const shiftTools: string[] = ['A', 'B', 'C', 'X'];
   const symbols: ShiftSymbol[] = ['O', '特', '婚', '產', '年', '喪'];
 
@@ -125,28 +80,6 @@ const Controls: React.FC<ControlsProps> = ({
                 排班小幫手 ShiftFlow
             </h1>
             <div className="flex gap-4">
-                 <button 
-                    onClick={handleExport}
-                    className="flex items-center gap-2 px-4 py-2 text-base font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
-                    title="匯出 JSON 備份檔"
-                >
-                    <Download className="w-5 h-5" />
-                    <span>匯出</span>
-                </button>
-                <label 
-                    className="flex items-center gap-2 px-4 py-2 text-base font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors cursor-pointer"
-                    title="匯入 JSON 備份檔"
-                >
-                    <Upload className="w-5 h-5" />
-                    <span>匯入</span>
-                    <input 
-                        type="file" 
-                        accept=".json"
-                        className="hidden" 
-                        onChange={handleImportClick}
-                    />
-                </label>
-                <div className="w-px bg-gray-300 mx-2 h-8 self-center"></div>
                  <button 
                     onClick={handlePrint}
                     className="flex items-center gap-2 px-4 py-2 text-base font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"

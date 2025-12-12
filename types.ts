@@ -66,17 +66,3 @@ export interface ScheduleResult {
   usedThursdayScenario: ThursdayScenario;
   usedTuesdayReduction: boolean;
 }
-
-export interface BackupData {
-  config: SchedulingConfig;
-  employees: Employee[];
-  stats?: {
-      totalDemand: number;
-      totalCapacity: number;
-      suggestedSpecialLeaves: number;
-  };
-  activeThursdayScenario?: ThursdayScenario;
-  usedTuesdayReduction?: boolean;
-  version: string;
-  timestamp: number;
-}
