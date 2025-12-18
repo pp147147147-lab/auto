@@ -5,7 +5,6 @@ import RosterTable from './components/RosterTable';
 import ClearModal from './components/ClearModal';
 import { SchedulingConfig, Employee, ThursdayScenario, Tool, ShiftType, ShiftSymbol } from './types';
 import { generateSchedule, calculateBaseTarget, validateSchedule, recalculateEmployeeStats, calculateOverviewStats } from './services/scheduleGenerator';
-import { AlertCircle } from 'lucide-react';
 
 const STORAGE_KEY = 'shiftflow_data_v1';
 
@@ -134,8 +133,6 @@ const App: React.FC = () => {
                   delete newShifts[key];
                   delete newManualEntries[key];
               } else if (mode === 'generated') {
-                  // Only delete if it's an array (shifts) AND NOT marked as manual
-                  // This ensures manually entered A/B/C shifts (which have isManual=true) are PRESERVED
                   if (Array.isArray(cellValue) && !isManual) {
                       delete newShifts[key];
                   }
@@ -192,7 +189,6 @@ const App: React.FC = () => {
           }
       } 
       else if (selectedSymbol && !['A', 'B', 'C', 'X'].includes(selectedSymbol)) {
-          // Cast selectedSymbol to ShiftSymbol explicitly
           newShifts[dateKey] = selectedSymbol as ShiftSymbol;
           newManualEntries[dateKey] = true;
       }
@@ -273,21 +269,6 @@ const App: React.FC = () => {
         monthLabel={`${config.year}年${config.month + 1}月`}
       />
       
-      {warnings.length > 0 && (
-          <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-2 flex-shrink-0 print:hidden">
-            <div className="flex items-start gap-2 max-w-7xl mx-auto">
-                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-yellow-700 max-h-20 overflow-y-auto w-full">
-                    <p className="font-semibold">排班警告 ({warnings.length})：</p>
-                    <ul className="list-disc pl-4 space-y-1">
-                        {warnings.slice(0, 3).map((w, i) => <li key={i}>{w}</li>)}
-                        {warnings.length > 3 && <li>...以及其他 {warnings.length - 3} 個問題。</li>}
-                    </ul>
-                </div>
-            </div>
-          </div>
-      )}
-
       <RosterTable 
         key={gridKey}
         year={config.year}
