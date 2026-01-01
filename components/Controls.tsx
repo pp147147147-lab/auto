@@ -155,6 +155,24 @@ const Controls: React.FC<ControlsProps> = ({
                 {/* Print & Expand Buttons */}
                 <div className="flex items-center gap-2 self-end md:self-auto">
                     <button 
+                        onClick={onGenerate}
+                        className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full transition-all shadow-md hover:shadow-lg active:scale-95 whitespace-nowrap"
+                    >
+                        <Calculator className="w-4 h-4" />
+                        <span className="hidden sm:inline">開始自動排班</span>
+                        <span className="sm:hidden">排班</span>
+                    </button>
+                    
+                    <button 
+                        onClick={onOpenClearModal}
+                        className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-red-600 bg-white hover:bg-red-50 rounded-full transition-all border border-red-200 shadow-sm whitespace-nowrap"
+                        title="重設目前月份班表"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="hidden sm:inline">重設</span>
+                    </button>
+
+                    <button 
                         onClick={handlePrint}
                         className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-gray-600 bg-gray-50 hover:bg-gray-200 rounded-full transition-all border border-gray-200 whitespace-nowrap"
                     >
@@ -336,23 +354,9 @@ const Controls: React.FC<ControlsProps> = ({
                                     ))}
                                 </select>
                             </div>
-
-                            <button 
-                                onClick={onGenerate}
-                                className="w-full bg-indigo-600 text-white px-4 py-4 rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 font-black flex items-center justify-center gap-2 transition-all active:scale-[0.98] text-lg uppercase tracking-wider"
-                            >
-                                <Calculator className="w-6 h-6" />
-                                開始自動排班
-                            </button>
+                            {/* Button removed from here */}
                         </div>
-                        
-                        <button 
-                            onClick={onOpenClearModal}
-                            className="w-full mt-4 text-red-400 hover:text-red-600 text-[10px] font-black uppercase flex items-center justify-center gap-1.5 py-2 transition-colors border border-dashed border-red-100 rounded-lg hover:border-red-200"
-                        >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            重設目前月份班表
-                        </button>
+                        {/* Clear button moved to header */}
                     </div>
                 </div>
 
@@ -406,3 +410,4 @@ const Controls: React.FC<ControlsProps> = ({
 };
 
 export default Controls;
+    
