@@ -278,7 +278,7 @@ const solveStandardDay = (availableStaff: number, reqA: number, reqB: number, re
   return possibleSolutions.sort((a, b) => b.staffNeeded - a.staffNeeded);
 };
 
-// Explicitly type the return and remove potential undefined paths by using default return
+// Explicit return type and default handling to fix TypeScript error
 const solveThursday = (scenario: ThursdayScenario): { numAB: number; numA: number; cost: number } => {
   switch (scenario) {
     case ThursdayScenario.B: 
@@ -288,6 +288,7 @@ const solveThursday = (scenario: ThursdayScenario): { numAB: number; numA: numbe
         return { numAB: 4, numA: 0, cost: 8 };
     case ThursdayScenario.A:
     default: 
+        // Default catch-all for A or any unexpected enum value
         return { numAB: 5, numA: 0, cost: 10 };
   }
 };
@@ -464,11 +465,12 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
           }
       }
   } else {
+      // Manual selection
+      selectedScenario = thursdayMode;
+      // FIX: Explicitly set reduction flag if user chose C+Tue manually
       if (thursdayMode === ThursdayScenario.C_Plus_Tue) {
-          selectedScenario = ThursdayScenario.C;
           useTuesdayReduction = true;
       } else {
-          selectedScenario = thursdayMode;
           useTuesdayReduction = false;
       }
   }
@@ -493,40 +495,8 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
       else finalTotalDemand += standardCost;
   }
 
-  // --- NEW: CAPACITY BALANCING (Convert 'O' to '特') ---
-  let currentSurplus = absTotalCapacity - finalTotalDemand;
-
-  while (currentSurplus > 0) {
-      const candidates = employees.map(e => {
-          const oDates = Object.entries(e.shifts)
-              .filter(([k, v]) => {
-                  const [y, m] = k.split('-').map(Number);
-                  return y === year && m === month && v === 'O';
-              })
-              .map(([k]) => k);
-          return { emp: e, oDates };
-      }).filter(c => c.oDates.length > 0);
-
-      if (candidates.length === 0) break;
-
-      candidates.sort((a, b) => b.oDates.length - a.oDates.length);
-
-      const target = candidates[0];
-      const dateToConvert = target.oDates[0];
-
-      target.emp.shifts[dateToConvert] = '特';
-
-      const newStats = recalculateEmployeeStats(target.emp, year, month);
-      target.emp.generatedShiftCount = newStats.generatedShiftCount;
-      target.emp.targetDeduction = newStats.targetDeduction;
-
-      absTotalCapacity -= 2;
-      currentSurplus -= 2;
-  }
-  // --- END BALANCING ---
-
-  const finalSurplus = absTotalCapacity - finalTotalDemand;
-  const suggestedSpecialLeaves = Math.max(0, Math.floor(finalSurplus / 2)); 
+  const surplus = absTotalCapacity - finalTotalDemand;
+  const suggestedSpecialLeaves = Math.max(0, Math.floor(surplus / 2)); 
 
   const daysToSchedule = [];
   for (let d = 1; d <= daysInMonth; d++) {
