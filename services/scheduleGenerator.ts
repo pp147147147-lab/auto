@@ -1,3 +1,4 @@
+
 import { Employee, SchedulingConfig, ThursdayScenario, CellData, ShiftSymbol, ScheduleResult, ShiftType } from '../types';
 import { SYMBOL_DEDUCTIONS, WEEKDAYS } from '../constants';
 
@@ -166,6 +167,7 @@ export const getDailyRequirements = (
       case ThursdayScenario.A: reqA = 5; reqB = 5; break;
       case ThursdayScenario.B: reqA = 5; reqB = 4; break;
       case ThursdayScenario.C: reqA = 4; reqB = 4; break;
+      case ThursdayScenario.C_Plus_Tue: reqA = 4; reqB = 4; break;
     }
     return { A: reqA, B: reqB, C: 0, total: reqA + reqB };
   }
@@ -276,11 +278,17 @@ const solveStandardDay = (availableStaff: number, reqA: number, reqB: number, re
   return possibleSolutions.sort((a, b) => b.staffNeeded - a.staffNeeded);
 };
 
-const solveThursday = (scenario: ThursdayScenario) => {
+// Fix: Add explicit return type and handle all cases
+const solveThursday = (scenario: ThursdayScenario): { numAB: number; numA: number; cost: number } => {
   switch (scenario) {
-    case ThursdayScenario.A: return { numAB: 5, numA: 0, cost: 10 };
-    case ThursdayScenario.B: return { numAB: 4, numA: 1, cost: 9 };
-    case ThursdayScenario.C: return { numAB: 4, numA: 0, cost: 8 };
+    case ThursdayScenario.B: 
+        return { numAB: 4, numA: 1, cost: 9 };
+    case ThursdayScenario.C:
+    case ThursdayScenario.C_Plus_Tue:
+        return { numAB: 4, numA: 0, cost: 8 };
+    case ThursdayScenario.A:
+    default: 
+        return { numAB: 5, numA: 0, cost: 10 };
   }
 };
 
@@ -457,6 +465,12 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
       }
   } else {
       selectedScenario = thursdayMode;
+      // Fix: Manually set reduction if user selected it
+      if (thursdayMode === ThursdayScenario.C_Plus_Tue) {
+          useTuesdayReduction = true;
+      } else {
+          useTuesdayReduction = false;
+      }
   }
   
   const finalThuCost = selectedScenario === ThursdayScenario.A ? 10 : selectedScenario === ThursdayScenario.B ? 9 : 8;
@@ -483,7 +497,6 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
   let balancingSurplus = absTotalCapacity - finalTotalDemand;
 
   while (balancingSurplus > 0) {
-      // Find all employees who have 'O' shifts in the current month
       const candidates = employees.map(e => {
           const oDates = Object.entries(e.shifts)
               .filter(([k, v]) => {
@@ -494,24 +507,19 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
           return { emp: e, oDates };
       }).filter(c => c.oDates.length > 0);
 
-      // If no one has 'O', we can't balance using this method
       if (candidates.length === 0) break;
 
-      // Sort by number of 'O' shifts descending (Employees with MORE 'O's get converted first)
       candidates.sort((a, b) => b.oDates.length - a.oDates.length);
 
       const target = candidates[0];
-      const dateToConvert = target.oDates[0]; // Pick the first available 'O' date
+      const dateToConvert = target.oDates[0];
 
-      // Convert 'O' to '特'
       target.emp.shifts[dateToConvert] = '特';
 
-      // Recalculate stats for this employee
       const newStats = recalculateEmployeeStats(target.emp, year, month);
       target.emp.generatedShiftCount = newStats.generatedShiftCount;
       target.emp.targetDeduction = newStats.targetDeduction;
 
-      // Update global capacity tracking ('特' adds 2 to deduction, so Capacity decreases by 2)
       absTotalCapacity -= 2;
       balancingSurplus -= 2;
   }
