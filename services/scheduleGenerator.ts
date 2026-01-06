@@ -505,15 +505,6 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
   });
 
   // 2. Ladder Reduction - Determine Strategy
-  let totalCapacity = 0;
-  employees.forEach(e => {
-    const effectiveTarget = (e.customTarget ?? baseTarget) - e.targetDeduction;
-    // Capacity is remaining target needed
-    totalCapacity += Math.max(0, effectiveTarget - e.generatedShiftCount); 
-    // ^ logic adjusted: capacity should be total potential, but here we are summing how much *more* they can do.
-    // Actually, simple totalCapacity logic:
-    // totalCapacity = Sum(Target - Deduction)
-  });
   
   // Re-calc absolute total capacity for scenario logic
   let absTotalCapacity = 0;
@@ -595,8 +586,54 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
       else finalTotalDemand += standardCost;
   }
 
-  const surplus = absTotalCapacity - finalTotalDemand;
-  const suggestedSpecialLeaves = Math.max(0, Math.floor(surplus / 2)); 
+  // --- NEW: CAPACITY BALANCING (Convert 'O' to '特') ---
+  let currentSurplus = absTotalCapacity - finalTotalDemand;
+
+  // If we have surplus capacity, check if we can reduce it by converting 'O' to '特'
+  // 'O' deduction = 0, '特' deduction = 2. Each conversion reduces capacity by 2.
+  while (currentSurplus > 0) {
+      // 1. Identify candidates: Employees with 'O' in this month
+      // We map to an object containing the employee and their list of 'O' dates
+      const candidates = employees.map(e => {
+          const oDates = Object.entries(e.shifts)
+              .filter(([k, v]) => {
+                  const [y, m] = k.split('-').map(Number);
+                  return y === year && m === month && v === 'O'; // Must be 'O' symbol
+              })
+              .map(([k]) => k);
+          return { emp: e, oDates };
+      }).filter(c => c.oDates.length > 0);
+
+      // If no one has 'O's left to convert, we stop
+      if (candidates.length === 0) break;
+
+      // 2. Sort candidates: Employees with the MOST 'O's come first
+      candidates.sort((a, b) => b.oDates.length - a.oDates.length);
+
+      // 3. Pick the top candidate
+      const target = candidates[0];
+      const dateToConvert = target.oDates[0]; // Pick first available O
+
+      // 4. Convert 'O' to '特'
+      // This increases targetDeduction by 2 (O=0, 特=2), effectively reducing their Capacity by 2
+      target.emp.shifts[dateToConvert] = '特';
+      // Mark as manual entry if needed, but since this is pre-processing before generation, 
+      // we usually want this to persist like a user action.
+      // However, keeping consistent with auto-gen logic, we modify the object reference directly.
+
+      // 5. Update stats locally to reflect the change
+      const newStats = recalculateEmployeeStats(target.emp, year, month);
+      target.emp.generatedShiftCount = newStats.generatedShiftCount;
+      target.emp.targetDeduction = newStats.targetDeduction;
+
+      // 6. Adjust tracking variables
+      absTotalCapacity -= 2;
+      currentSurplus -= 2;
+  }
+  // --- END BALANCING ---
+
+  const finalSurplus = absTotalCapacity - finalTotalDemand;
+  const suggestedSpecialLeaves = Math.max(0, Math.floor(finalSurplus / 2)); 
 
   // 3. PRIORITY QUEUE GENERATION (Hardest Days First)
   // Calculate priority for each day
