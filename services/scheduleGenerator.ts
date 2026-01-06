@@ -280,14 +280,16 @@ const solveStandardDay = (availableStaff: number, reqA: number, reqB: number, re
 
 // Explicitly type the return and remove potential undefined paths by using default return
 const solveThursday = (scenario: ThursdayScenario): { numAB: number; numA: number; cost: number } => {
-  if (scenario === ThursdayScenario.B) {
-      return { numAB: 4, numA: 1, cost: 9 };
+  switch (scenario) {
+    case ThursdayScenario.B: 
+        return { numAB: 4, numA: 1, cost: 9 };
+    case ThursdayScenario.C:
+    case ThursdayScenario.C_Plus_Tue:
+        return { numAB: 4, numA: 0, cost: 8 };
+    case ThursdayScenario.A:
+    default: 
+        return { numAB: 5, numA: 0, cost: 10 };
   }
-  if (scenario === ThursdayScenario.C || scenario === ThursdayScenario.C_Plus_Tue) {
-      return { numAB: 4, numA: 0, cost: 8 };
-  }
-  // Default to A logic (for ThursdayScenario.A and any fallback)
-  return { numAB: 5, numA: 0, cost: 10 };
 };
 
 const shuffle = <T>(array: T[]): T[] => {
