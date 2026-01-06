@@ -336,10 +336,11 @@ const solveStandardDay = (availableStaff: number, reqA: number, reqB: number, re
 
 const solveThursday = (scenario: ThursdayScenario) => {
   switch (scenario) {
-    case ThursdayScenario.A: return { numAB: 5, numA: 0, cost: 10 };
     case ThursdayScenario.B: return { numAB: 4, numA: 1, cost: 9 };
     case ThursdayScenario.C: return { numAB: 4, numA: 0, cost: 8 };
     case ThursdayScenario.C_Plus_Tue: return { numAB: 4, numA: 0, cost: 8 }; // Same as C
+    case ThursdayScenario.A:
+    default: return { numAB: 5, numA: 0, cost: 10 };
   }
 };
 
