@@ -278,7 +278,6 @@ const solveStandardDay = (availableStaff: number, reqA: number, reqB: number, re
   return possibleSolutions.sort((a, b) => b.staffNeeded - a.staffNeeded);
 };
 
-// Fix: Add explicit return type and handle all cases
 const solveThursday = (scenario: ThursdayScenario): { numAB: number; numA: number; cost: number } => {
   switch (scenario) {
     case ThursdayScenario.B: 
