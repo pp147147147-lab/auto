@@ -278,7 +278,7 @@ const solveStandardDay = (availableStaff: number, reqA: number, reqB: number, re
   return possibleSolutions.sort((a, b) => b.staffNeeded - a.staffNeeded);
 };
 
-// Explicitly type the return and remove potential undefined paths
+// Explicitly type the return and remove potential undefined paths by using default return
 const solveThursday = (scenario: ThursdayScenario): { numAB: number; numA: number; cost: number } => {
   if (scenario === ThursdayScenario.B) {
       return { numAB: 4, numA: 1, cost: 9 };
@@ -286,7 +286,7 @@ const solveThursday = (scenario: ThursdayScenario): { numAB: number; numA: numbe
   if (scenario === ThursdayScenario.C || scenario === ThursdayScenario.C_Plus_Tue) {
       return { numAB: 4, numA: 0, cost: 8 };
   }
-  // Default to A
+  // Default to A logic (for ThursdayScenario.A and any fallback)
   return { numAB: 5, numA: 0, cost: 10 };
 };
 
