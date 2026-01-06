@@ -11,6 +11,7 @@ export const SCENARIO_DESCRIPTIONS: Record<ThursdayScenario, string> = {
   [ThursdayScenario.A]: '情境 A (早5, 午5)',
   [ThursdayScenario.B]: '情境 B (早5, 午4)',
   [ThursdayScenario.C]: '情境 C (早4, 午4)',
+  [ThursdayScenario.C_Plus_Tue]: '情境 C + 週二減員',
 };
 
 // Visual styles for symbols and shifts

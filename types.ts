@@ -31,6 +31,7 @@ export enum ThursdayScenario {
   A = 'A', // A=5, B=5
   B = 'B', // A=5, B=4
   C = 'C', // A=4, B=4
+  C_Plus_Tue = 'C_Plus_Tue', // A=4, B=4 + Tue Reduced
 }
 
 export interface SchedulingConfig {

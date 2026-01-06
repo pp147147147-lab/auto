@@ -200,6 +200,8 @@ export const getDailyRequirements = (
       case ThursdayScenario.A: reqA = 5; reqB = 5; break;
       case ThursdayScenario.B: reqA = 5; reqB = 4; break;
       case ThursdayScenario.C: reqA = 4; reqB = 4; break;
+      // If C_Plus_Tue is passed here (should be normalized to C by caller, but for safety handle same as C)
+      case ThursdayScenario.C_Plus_Tue: reqA = 4; reqB = 4; break;
     }
     return { A: reqA, B: reqB, C: 0, total: reqA + reqB };
   }
@@ -337,6 +339,7 @@ const solveThursday = (scenario: ThursdayScenario) => {
     case ThursdayScenario.A: return { numAB: 5, numA: 0, cost: 10 };
     case ThursdayScenario.B: return { numAB: 4, numA: 1, cost: 9 };
     case ThursdayScenario.C: return { numAB: 4, numA: 0, cost: 8 };
+    case ThursdayScenario.C_Plus_Tue: return { numAB: 4, numA: 0, cost: 8 }; // Same as C
   }
 };
 
@@ -561,7 +564,14 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
           }
       }
   } else {
-      selectedScenario = thursdayMode;
+      // HANDLE MANUAL SELECTION
+      if (thursdayMode === ThursdayScenario.C_Plus_Tue) {
+          selectedScenario = ThursdayScenario.C;
+          useTuesdayReduction = true;
+      } else {
+          selectedScenario = thursdayMode;
+          useTuesdayReduction = false;
+      }
   }
   
   const finalThuCost = selectedScenario === ThursdayScenario.A ? 10 : selectedScenario === ThursdayScenario.B ? 9 : 8;
