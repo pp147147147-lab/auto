@@ -66,19 +66,7 @@ const RosterTable: React.FC<RosterTableProps> = ({
   return (
     <div className="flex-1 overflow-hidden flex flex-col relative bg-white shadow-sm border-t border-gray-200 print:shadow-none print:border-0 print:block print:overflow-visible print:h-auto">
       
-      <div className="hidden print:block mb-4 px-4 pt-4">
-          <div className="flex justify-between items-end border-b-2 border-black pb-2">
-              <div>
-                  <h1 className="text-2xl font-bold text-black">{year}年 {month + 1}月 員工排班表</h1>
-                  <p className="text-sm text-gray-600 mt-1">
-                    目標節數: {baseTarget} / 週四模式: {activeScenario} {usedTuesdayReduction ? '+ 週二減員' : ''}
-                  </p>
-              </div>
-              <div className="text-right text-xs text-gray-500">
-                  列印日期: {new Date().toLocaleDateString()}
-              </div>
-          </div>
-      </div>
+      {/* Print Header Removed as requested */}
 
       <div className="overflow-auto flex-1 pb-4 bg-white print:overflow-visible print:pb-0">
         <table className="min-w-max border-collapse text-xs w-full print:text-[10px] print:w-full">
