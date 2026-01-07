@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Calendar, Users, Calculator, ChevronDown, ChevronUp, Printer, Trash2, Eraser, MousePointer2 } from 'lucide-react';
+import { Calendar, Users, Calculator, ChevronDown, ChevronUp, Printer, Trash2, Eraser, MousePointer2, Scale } from 'lucide-react';
 import { SchedulingConfig, ThursdayScenario, Employee, ShiftSymbol, Tool } from '../types';
 import { SCENARIO_DESCRIPTIONS, CELL_STYLES, TARGET_MULTIPLIER } from '../constants';
 import { getMonthlySpecialHolidays } from '../services/scheduleGenerator';
@@ -311,6 +311,35 @@ const Controls: React.FC<ControlsProps> = ({
                                 />
                             </div>
                         </div>
+
+                        {/* Auto Balance Switch */}
+                         <div className="mt-4 pt-3 border-t border-gray-200">
+                             <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Scale className="w-4 h-4 text-pink-500" />
+                                    <label htmlFor="autoBalance" className="text-xs font-bold text-gray-600 cursor-pointer select-none">
+                                        自動轉換 'O' 為 '特' (平衡人力)
+                                    </label>
+                                </div>
+                                <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input 
+                                        type="checkbox" 
+                                        name="autoBalance" 
+                                        id="autoBalance" 
+                                        checked={config.autoBalanceOffToSpecial}
+                                        onChange={(e) => setConfig({...config, autoBalanceOffToSpecial: e.target.checked})}
+                                        className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer peer checked:right-0 right-5"
+                                    />
+                                    <label 
+                                        htmlFor="autoBalance" 
+                                        className={`toggle-label block overflow-hidden h-5 rounded-full cursor-pointer transition-colors ${config.autoBalanceOffToSpecial ? 'bg-pink-500' : 'bg-gray-300'}`}
+                                    ></label>
+                                </div>
+                             </div>
+                             <p className="text-[9px] text-gray-400 mt-1 pl-6">
+                                 若人力過剩，系統會優先將 'O' 較多的員工自動轉為 '特'，以達成供需平衡。
+                             </p>
+                        </div>
                     </div>
 
                     {/* 3. Stats Overview */}
@@ -341,7 +370,7 @@ const Controls: React.FC<ControlsProps> = ({
                     {/* 4. Core Actions */}
                     <div className="space-y-4 p-5 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col justify-between">
                         <div>
-                            <div className="mb-4">
+                            <div className="mb-0">
                                 <label className="text-[10px] text-gray-400 mb-1 block font-black uppercase tracking-wider">週四排班模式</label>
                                 <select 
                                     value={config.thursdayMode}
@@ -354,9 +383,7 @@ const Controls: React.FC<ControlsProps> = ({
                                     ))}
                                 </select>
                             </div>
-                            {/* Button removed from here */}
                         </div>
-                        {/* Clear button moved to header */}
                     </div>
                 </div>
 
@@ -410,4 +437,3 @@ const Controls: React.FC<ControlsProps> = ({
 };
 
 export default Controls;
-    

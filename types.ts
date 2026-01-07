@@ -54,6 +54,9 @@ export interface SchedulingConfig {
 
   // Jan 1st Configuration
   jan1WorkDay: boolean;
+
+  // Auto Balance Configuration
+  autoBalanceOffToSpecial: boolean;
 }
 
 export interface ScheduleResult {

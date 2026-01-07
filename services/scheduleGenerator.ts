@@ -493,34 +493,37 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
   }
 
   // --- Capacity Balancing Logic: Convert 'O' to '特' if surplus exists ---
-  let balancingSurplus = absTotalCapacity - finalTotalDemand;
+  // Now wrapped with config check
+  if (config.autoBalanceOffToSpecial) {
+      let balancingSurplus = absTotalCapacity - finalTotalDemand;
 
-  while (balancingSurplus > 0) {
-      const candidates = employees.map(e => {
-          const oDates = Object.entries(e.shifts)
-              .filter(([k, v]) => {
-                  const [y, m] = k.split('-').map(Number);
-                  return y === year && m === month && v === 'O';
-              })
-              .map(([k]) => k);
-          return { emp: e, oDates };
-      }).filter(c => c.oDates.length > 0);
+      while (balancingSurplus > 0) {
+          const candidates = employees.map(e => {
+              const oDates = Object.entries(e.shifts)
+                  .filter(([k, v]) => {
+                      const [y, m] = k.split('-').map(Number);
+                      return y === year && m === month && v === 'O';
+                  })
+                  .map(([k]) => k);
+              return { emp: e, oDates };
+          }).filter(c => c.oDates.length > 0);
 
-      if (candidates.length === 0) break;
+          if (candidates.length === 0) break;
 
-      candidates.sort((a, b) => b.oDates.length - a.oDates.length);
+          candidates.sort((a, b) => b.oDates.length - a.oDates.length);
 
-      const target = candidates[0];
-      const dateToConvert = target.oDates[0];
+          const target = candidates[0];
+          const dateToConvert = target.oDates[0];
 
-      target.emp.shifts[dateToConvert] = '特';
+          target.emp.shifts[dateToConvert] = '特';
 
-      const newStats = recalculateEmployeeStats(target.emp, year, month);
-      target.emp.generatedShiftCount = newStats.generatedShiftCount;
-      target.emp.targetDeduction = newStats.targetDeduction;
+          const newStats = recalculateEmployeeStats(target.emp, year, month);
+          target.emp.generatedShiftCount = newStats.generatedShiftCount;
+          target.emp.targetDeduction = newStats.targetDeduction;
 
-      absTotalCapacity -= 2;
-      balancingSurplus -= 2;
+          absTotalCapacity -= 2;
+          balancingSurplus -= 2;
+      }
   }
   // --- End Balancing ---
 

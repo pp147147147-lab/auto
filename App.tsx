@@ -36,7 +36,8 @@ const App: React.FC = () => {
     thursdayMode: 'Auto',
     yearHolidayStart: '', 
     yearHolidayEnd: '',
-    jan1WorkDay: false
+    jan1WorkDay: false,
+    autoBalanceOffToSpecial: false
   });
 
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -61,6 +62,7 @@ const App: React.FC = () => {
                  // Migration checks
                  if (loadedConfig.yearHolidayCount !== undefined) delete loadedConfig.yearHolidayCount;
                  if (loadedConfig.jan1WorkDay === undefined) loadedConfig.jan1WorkDay = false;
+                 if (loadedConfig.autoBalanceOffToSpecial === undefined) loadedConfig.autoBalanceOffToSpecial = false;
                  setConfig(loadedConfig);
               }
               if (parsed.employees) {
