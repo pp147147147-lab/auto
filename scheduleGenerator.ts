@@ -506,7 +506,7 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
       applyShifts(employees, candidates, dateKey, ['A'], 1);
     } 
     else if (dow === 4) {
-      const { numAB, numA } = solveThursday(selectedScenario);
+      const { numAB, numA } = solveThursday(selectedScenario)!;
       let assignedForDay = new Set<string>();
 
       const candidatesAB = pickBestCandidates(staffPool, numAB, 2, baseTarget);
