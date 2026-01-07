@@ -18,7 +18,6 @@ interface RosterTableProps {
 }
 
 const ShiftBadge: React.FC<{ type: ShiftType }> = ({ type }) => {
-  // If type is Xa, Xb, Xc, display 'X', otherwise display the type
   const label = type.startsWith('X') ? 'X' : type;
   
   return (
@@ -46,7 +45,7 @@ const RosterTable: React.FC<RosterTableProps> = ({
 
   const getDayInfo = (day: number) => {
     const date = new Date(year, month, day);
-    const dow = date.getDay(); // 0=Sun
+    const dow = date.getDay(); 
     const specialHoliday = getSpecialHolidayName(year, month, day);
     return {
       dow,
@@ -60,14 +59,13 @@ const RosterTable: React.FC<RosterTableProps> = ({
 
   const handleCellClick = (idx: number, day: number, shiftType?: ShiftType) => {
       const { isSunday } = getDayInfo(day);
-      if (isSunday) return; // Prevent clicking on Sunday
+      if (isSunday) return;
       onCellClick(idx, day, shiftType);
   };
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col relative bg-white shadow-sm border-t border-gray-200 print:shadow-none print:border-0 print:block print:overflow-visible print:h-auto">
       
-      {/* Print Only Header */}
       <div className="hidden print:block mb-4 px-4 pt-4">
           <div className="flex justify-between items-end border-b-2 border-black pb-2">
               <div>
@@ -86,12 +84,10 @@ const RosterTable: React.FC<RosterTableProps> = ({
         <table className="min-w-max border-collapse text-xs w-full print:text-[10px] print:w-full">
           <thead className="bg-white sticky top-0 z-20 shadow-sm print:static print:shadow-none print:table-header-group">
             <tr>
-              {/* Employee Name Header */}
-              <th className="sticky left-0 z-30 bg-white border border-gray-300 p-1 min-w-[80px] w-[80px] text-center text-sm font-bold text-gray-700 print:border-black print:static print:bg-transparent print:w-auto print:min-w-0">
-                員工
+              <th className="sticky left-0 z-30 bg-white border border-gray-300 p-1 min-w-[36px] w-[36px] text-center text-base font-bold text-gray-700 print:border-black print:static print:bg-transparent print:w-auto print:min-w-0 align-bottom">
+                <span className="[writing-mode:vertical-rl]">員工</span>
               </th>
-              {/* Shift Label Header */}
-              <th className="sticky left-[80px] z-30 bg-white border border-gray-300 p-0.5 min-w-[24px] w-[24px] text-center text-[10px] font-bold text-gray-700 print:border-black print:static print:bg-transparent print:w-auto print:min-w-0">
+              <th className="sticky left-[36px] z-30 bg-white border border-gray-300 p-0.5 min-w-[24px] w-[24px] text-center text-[10px] font-bold text-gray-700 print:border-black print:static print:bg-transparent print:w-auto print:min-w-0">
                 班
               </th>
               
@@ -113,7 +109,6 @@ const RosterTable: React.FC<RosterTableProps> = ({
                   </th>
                 );
               })}
-              {/* Reduced width for Stats column */}
               <th className="sticky right-0 z-30 bg-white border border-gray-300 p-1 w-[40px] min-w-[40px] text-center text-xs font-bold text-gray-700 print:border-black print:static print:bg-transparent print:min-w-[40px]">
                 統計
               </th>
@@ -124,18 +119,14 @@ const RosterTable: React.FC<RosterTableProps> = ({
                const effectiveTarget = (emp.customTarget ?? baseTarget) - emp.targetDeduction;
                const diff = emp.generatedShiftCount - effectiveTarget;
                
-               // We render 3 rows per employee
                return (
                 <React.Fragment key={emp.id}>
-                    {/* Row 1: Morning (A) */}
                     <tr className="hover:bg-gray-50 transition-colors h-8 print:h-6 print:break-inside-avoid border-t-2 border-gray-300 print:border-black">
-                        {/* Employee Name - RowSpan 3 */}
-                        <td rowSpan={3} className="sticky left-0 z-10 bg-white border-r border-b border-gray-300 px-1 py-0 font-bold text-gray-800 text-center text-base shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] print:shadow-none print:border-black print:static print:text-xs align-middle">
+                        <td rowSpan={3} className="sticky left-0 z-10 bg-white border-r border-b border-gray-300 px-0 py-1 font-bold text-gray-800 text-center text-lg shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] print:shadow-none print:border-black print:static print:text-xs align-middle [writing-mode:vertical-rl] tracking-widest">
                             {emp.name}
                         </td>
                         
-                        {/* Shift Label: A */}
-                        <td className="sticky left-[80px] z-10 bg-gray-50/50 border-r border-b border-gray-300 text-center text-[10px] text-gray-500 font-medium align-middle print:border-black print:static print:text-xs">
+                        <td className="sticky left-[36px] z-10 bg-gray-50/50 border-r border-b border-gray-300 text-center text-[10px] text-gray-500 font-medium align-middle print:border-black print:static print:text-xs">
                             早
                         </td>
 
@@ -146,7 +137,6 @@ const RosterTable: React.FC<RosterTableProps> = ({
                             const isSymbol = !Array.isArray(cellData) && cellData;
                             const shifts = Array.isArray(cellData) ? cellData : [];
                             
-                            // If it's a symbol, we span 3 rows to show it clearly
                             if (isSymbol) {
                                 return (
                                     <td 
@@ -180,7 +170,6 @@ const RosterTable: React.FC<RosterTableProps> = ({
                             );
                         })}
 
-                        {/* Stats - RowSpan 3 */}
                         <td rowSpan={3} className="sticky right-0 z-10 bg-white border-l border-b border-gray-300 px-0.5 text-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] print:shadow-none print:border-black print:static align-middle">
                             <div className="flex flex-col items-center justify-center text-xs leading-tight print:text-xs">
                                 <span className="font-bold text-indigo-600 text-sm print:text-black print:text-sm">{emp.generatedShiftCount}</span>
@@ -194,9 +183,8 @@ const RosterTable: React.FC<RosterTableProps> = ({
                         </td>
                     </tr>
 
-                    {/* Row 2: Afternoon (B) */}
                     <tr className="hover:bg-gray-50 transition-colors h-8 print:h-6 print:break-inside-avoid">
-                        <td className="sticky left-[80px] z-10 bg-gray-50/50 border-r border-b border-gray-300 text-center text-[10px] text-gray-500 font-medium align-middle print:border-black print:static print:text-xs">
+                        <td className="sticky left-[36px] z-10 bg-gray-50/50 border-r border-b border-gray-300 text-center text-[10px] text-gray-500 font-medium align-middle print:border-black print:static print:text-xs">
                             中
                         </td>
                          {daysArray.map(day => {
@@ -206,7 +194,7 @@ const RosterTable: React.FC<RosterTableProps> = ({
                             const isSymbol = !Array.isArray(cellData) && cellData;
                             const shifts = Array.isArray(cellData) ? cellData : [];
 
-                            if (isSymbol) return null; // Handled in Row 1
+                            if (isSymbol) return null;
 
                             return (
                                 <td 
@@ -226,9 +214,8 @@ const RosterTable: React.FC<RosterTableProps> = ({
                         })}
                     </tr>
 
-                    {/* Row 3: Evening (C) */}
                     <tr className="hover:bg-gray-50 transition-colors h-8 print:h-6 print:break-inside-avoid">
-                        <td className="sticky left-[80px] z-10 bg-gray-50/50 border-r border-b border-gray-300 text-center text-[10px] text-gray-500 font-medium align-middle print:border-black print:static print:text-xs">
+                        <td className="sticky left-[36px] z-10 bg-gray-50/50 border-r border-b border-gray-300 text-center text-[10px] text-gray-500 font-medium align-middle print:border-black print:static print:text-xs">
                             晚
                         </td>
                         {daysArray.map(day => {
@@ -238,7 +225,7 @@ const RosterTable: React.FC<RosterTableProps> = ({
                             const isSymbol = !Array.isArray(cellData) && cellData;
                             const shifts = Array.isArray(cellData) ? cellData : [];
 
-                            if (isSymbol) return null; // Handled in Row 1
+                            if (isSymbol) return null;
 
                             return (
                                 <td 
@@ -264,14 +251,13 @@ const RosterTable: React.FC<RosterTableProps> = ({
           
           <tfoot className="bg-gray-50 sticky bottom-0 z-20 shadow-[0_-2px_4px_rgba(0,0,0,0.1)] print:table-footer-group print:shadow-none print:static transition-all duration-300">
             <tr>
-              {/* Footer needs to span 2 cols (Employee + Shift Label) */}
               <td colSpan={2} className="sticky left-0 z-30 bg-gray-100 border border-gray-300 p-0 font-bold text-gray-600 text-center text-xs print:border-black print:static print:bg-transparent">
                 <button 
                   onClick={() => setIsStatsExpanded(!isStatsExpanded)}
                   className="w-full h-full flex items-center justify-center gap-1 py-2 hover:bg-gray-200 transition-colors focus:outline-none"
                   title={isStatsExpanded ? "摺疊統計" : "展開統計"}
                 >
-                  統計
+                  <span className="[writing-mode:vertical-rl] text-[10px]">統計</span>
                   {isStatsExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
                 </button>
               </td>
@@ -281,7 +267,6 @@ const RosterTable: React.FC<RosterTableProps> = ({
                   const { isSunday } = getDayInfo(day);
                   const req = getDailyRequirements(date, config, activeScenario, usedTuesdayReduction);
                   
-                  // Calculate actual counts
                   let countA = 0, countB = 0, countC = 0;
                   employees.forEach(e => {
                       const cell = e.shifts[dateKey];
@@ -297,8 +282,6 @@ const RosterTable: React.FC<RosterTableProps> = ({
                   const badA = countA !== req.A;
                   const badB = countB !== req.B;
                   const badC = countC !== req.C;
-
-                  // Use Green text for reduced days (e.g. Tue B=4) to show it's valid
                   const isReduced = usedTuesdayReduction && date.getDay() === 2;
 
                   if (!isStatsExpanded) {
