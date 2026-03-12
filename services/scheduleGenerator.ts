@@ -168,23 +168,31 @@ export const getDailyRequirements = (
       case ThursdayScenario.B: reqA = 5; reqB = 4; break;
       case ThursdayScenario.C: reqA = 4; reqB = 4; break;
       case ThursdayScenario.C_Plus_Tue: reqA = 4; reqB = 4; break;
+      case ThursdayScenario.D: reqA = 5; reqB = 5; break;
     }
     return { A: reqA, B: reqB, C: 0, total: reqA + reqB };
   }
   
+  let stdA = config.reqStandardA;
   let stdB = config.reqStandardB;
   let stdC = config.reqStandardC;
 
-  if (dow === 2 && useTuesdayReduction) {
-      stdB = 4;
-      stdC = 4;
+  if (dow === 2) {
+      if (scenario === ThursdayScenario.D) {
+          stdA = 4;
+          stdB = 4;
+          stdC = 4;
+      } else if (useTuesdayReduction) {
+          stdB = 4;
+          stdC = 4;
+      }
   }
 
   return {
-    A: config.reqStandardA,
+    A: stdA,
     B: stdB,
     C: stdC,
-    total: config.reqStandardA + stdB + stdC
+    total: stdA + stdB + stdC
   };
 };
 
@@ -254,9 +262,33 @@ export const validateSchedule = (
   return warnings;
 };
 
-const solveStandardDay = (availableStaff: number, reqA: number, reqB: number, reqC: number) => {
+const isEligibleForShifts = (emp: Employee, dateKey: string, shiftsToAssign: ShiftType[]): boolean => {
+    const current = emp.shifts[dateKey];
+    if (!current) return true;
+    if (!Array.isArray(current)) return false; // Full-day symbol like 'O', 'X', '特'
+    
+    // If they have any actual shifts assigned (A, B, C), they are excluded from auto-assigning for this day
+    if (current.includes('A') || current.includes('B') || current.includes('C')) return false;
+
+    // Check if they have an 'X' for any of the shifts we want to assign
+    for (const shift of shiftsToAssign) {
+        if (shift === 'A' && current.includes('Xa')) return false;
+        if (shift === 'B' && current.includes('Xb')) return false;
+        if (shift === 'C' && current.includes('Xc')) return false;
+    }
+
+    return true;
+};
+
+const solveStandardDay = (
+  countABC: number, 
+  countBC: number, 
+  countA: number, 
+  effectiveAvailable: number, 
+  reqA: number, reqB: number, reqC: number
+) => {
   const possibleSolutions = [];
-  const maxABC = Math.min(availableStaff, reqA, reqB, reqC);
+  const maxABC = Math.min(countABC, reqA, reqB, reqC);
 
   for (let k = 0; k <= maxABC; k++) {
     const numABC = k;
@@ -270,8 +302,11 @@ const solveStandardDay = (availableStaff: number, reqA: number, reqB: number, re
     const numA = reqA - numABC;
     if (numA < 0) continue;
 
+    if (numABC + numBC > countBC) continue;
+    if (numABC + numA > countA) continue;
+
     const staffNeeded = numABC + numBC + numA;
-    if (staffNeeded <= availableStaff) {
+    if (staffNeeded <= effectiveAvailable) {
       possibleSolutions.push({ numABC, numBC, numA, staffNeeded });
     }
   }
@@ -285,6 +320,7 @@ const solveThursday = (scenario: ThursdayScenario): { numAB: number; numA: numbe
     case ThursdayScenario.C:
     case ThursdayScenario.C_Plus_Tue:
         return { numAB: 4, numA: 0, cost: 8 };
+    case ThursdayScenario.D:
     case ThursdayScenario.A:
     default: 
         return { numAB: 5, numA: 0, cost: 10 };
@@ -341,7 +377,14 @@ const applyShifts = (
     candidates.forEach(c => {
         const realEmp = employees.find(e => e.id === c.id);
         if (realEmp) {
-            realEmp.shifts[dateKey] = shift;
+            const current = realEmp.shifts[dateKey];
+            if (Array.isArray(current)) {
+                // Keep the existing Xa, Xb, Xc
+                const existingX = current.filter(s => s === 'Xa' || s === 'Xb' || s === 'Xc');
+                realEmp.shifts[dateKey] = [...existingX, ...shift];
+            } else {
+                realEmp.shifts[dateKey] = shift;
+            }
             realEmp.generatedShiftCount += cost;
         }
     });
@@ -362,7 +405,13 @@ const calculateDayPriority = (
     if (isYearHoliday(year, month, d, config.yearHolidayStart, config.yearHolidayEnd, config.jan1WorkDay)) return 9999;
     if (date.getDay() === 0) return 9999;
 
-    const available = employees.filter(e => !e.shifts[dateKey]).length;
+    const available = employees.filter(e => {
+        const current = e.shifts[dateKey];
+        if (!current) return true;
+        if (!Array.isArray(current)) return false;
+        if (current.includes('A') || current.includes('B') || current.includes('C')) return false;
+        return true;
+    }).length;
     
     const req = getDailyRequirements(date, config, scenario, useTueReduction);
     const demand = req.total;
@@ -408,8 +457,24 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
     Object.keys(e.shifts).forEach(dateKey => {
       const [y, m] = dateKey.split('-').map(Number);
       if (y === year && m === month) {
-         if (!e.manualEntries?.[dateKey]) {
+         const isManual = e.manualEntries?.[dateKey];
+         if (!isManual) {
              delete e.shifts[dateKey];
+         } else if (Array.isArray(isManual) && Array.isArray(e.shifts[dateKey])) {
+             const manualShifts = (e.shifts[dateKey] as ShiftType[]).filter(s => isManual.includes(s));
+             if (manualShifts.length > 0) {
+                 e.shifts[dateKey] = manualShifts;
+             } else {
+                 delete e.shifts[dateKey];
+                 delete e.manualEntries![dateKey];
+             }
+         } else if (Array.isArray(e.shifts[dateKey]) && isManual === true) {
+             const cellValue = e.shifts[dateKey] as ShiftType[];
+             const hasX = cellValue.some(s => s === 'Xa' || s === 'Xb' || s === 'Xc');
+             if (hasX) {
+                 const xShifts = cellValue.filter(s => s === 'Xa' || s === 'Xb' || s === 'Xc');
+                 e.shifts[dateKey] = xShifts;
+             }
          }
       }
     });
@@ -472,9 +537,11 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
       }
   }
   
-  const finalThuCost = selectedScenario === ThursdayScenario.A ? 10 : selectedScenario === ThursdayScenario.B ? 9 : 8;
+  const finalThuCost = (selectedScenario === ThursdayScenario.A || selectedScenario === ThursdayScenario.D) ? 10 : selectedScenario === ThursdayScenario.B ? 9 : 8;
   let finalTueCost = config.reqStandardA + config.reqStandardB + config.reqStandardC;
-  if (useTuesdayReduction) {
+  if (selectedScenario === ThursdayScenario.D) {
+      finalTueCost = 4 + 4 + 4;
+  } else if (useTuesdayReduction) {
       finalTueCost = config.reqStandardA + 4 + 4; 
   }
   const standardCost = config.reqStandardA + config.reqStandardB + config.reqStandardC;
@@ -545,44 +612,61 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
     const dow = date.getDay();
     const dateKey = `${year}-${month}-${day}`;
     
-    const availableStaff = employees.filter(e => !e.shifts[dateKey]); 
-    const staffPool = [...availableStaff];
+    const staffPool = employees.filter(e => {
+        const current = e.shifts[dateKey];
+        if (!current) return true;
+        if (!Array.isArray(current)) return false;
+        if (current.includes('A') || current.includes('B') || current.includes('C')) return false;
+        return true;
+    });
 
     if (dow === 6) {
-      const candidates = pickBestCandidates(staffPool, config.reqSaturdayA, 1, baseTarget);
+      const poolForA = staffPool.filter(e => isEligibleForShifts(e, dateKey, ['A']));
+      const candidates = pickBestCandidates(poolForA, config.reqSaturdayA, 1, baseTarget);
       applyShifts(employees, candidates, dateKey, ['A'], 1);
     } 
     else if (dow === 4) {
       const { numAB, numA } = solveThursday(selectedScenario);
       let assignedForDay = new Set<string>();
 
-      const candidatesAB = pickBestCandidates(staffPool, numAB, 2, baseTarget);
+      const poolForAB = staffPool.filter(e => isEligibleForShifts(e, dateKey, ['A', 'B']));
+      const candidatesAB = pickBestCandidates(poolForAB, numAB, 2, baseTarget);
       applyShifts(employees, candidatesAB, dateKey, ['A', 'B'], 2);
       candidatesAB.forEach(c => assignedForDay.add(c.id));
 
-      const poolForA = staffPool.filter(e => !assignedForDay.has(e.id));
+      const poolForA = staffPool.filter(e => !assignedForDay.has(e.id) && isEligibleForShifts(e, dateKey, ['A']));
       const candidatesA = pickBestCandidates(poolForA, numA, 1, baseTarget);
       applyShifts(employees, candidatesA, dateKey, ['A'], 1);
     } 
     else {
+      let reqA = config.reqStandardA;
       let reqB = config.reqStandardB;
       let reqC = config.reqStandardC;
       
-      if (dow === 2 && useTuesdayReduction) {
-          reqB = 4; reqC = 4;
+      if (dow === 2) {
+          if (selectedScenario === ThursdayScenario.D) {
+              reqA = 4; reqB = 4; reqC = 4;
+          } else if (useTuesdayReduction) {
+              reqB = 4; reqC = 4;
+          }
       }
 
       const isCriticalDay = staffPool.length <= 5; 
 
-      const solutions = solveStandardDay(staffPool.length, config.reqStandardA, reqB, reqC);
-      const bestSol = solutions.find(s => s.staffNeeded <= staffPool.length);
+      const countABC = staffPool.filter(e => isEligibleForShifts(e, dateKey, ['A', 'B', 'C'])).length;
+      const countBC = staffPool.filter(e => isEligibleForShifts(e, dateKey, ['B', 'C'])).length;
+      const countA = staffPool.filter(e => isEligibleForShifts(e, dateKey, ['A'])).length;
+      const effectiveAvailable = staffPool.filter(e => isEligibleForShifts(e, dateKey, ['A', 'B', 'C']) || isEligibleForShifts(e, dateKey, ['B', 'C']) || isEligibleForShifts(e, dateKey, ['A'])).length;
+
+      const solutions = solveStandardDay(countABC, countBC, countA, effectiveAvailable, reqA, reqB, reqC);
+      const bestSol = solutions.find(s => s.staffNeeded <= effectiveAvailable);
       
       if (bestSol) {
         const { numABC, numBC, numA } = bestSol;
         const assignedForDay = new Set<string>();
         
         const poolForABC = staffPool.filter(emp => {
-           return checkConsecutiveABC(emp, year, month, day, isCriticalDay);
+           return isEligibleForShifts(emp, dateKey, ['A', 'B', 'C']) && checkConsecutiveABC(emp, year, month, day, isCriticalDay);
         });
 
         let candidatesABC = pickBestCandidates(poolForABC, numABC, 3, baseTarget);
@@ -595,7 +679,7 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
         applyShifts(employees, candidatesABC, dateKey, ['A', 'B', 'C'], 3);
         candidatesABC.forEach(c => assignedForDay.add(c.id));
 
-        const poolForBC = staffPool.filter(e => !assignedForDay.has(e.id));
+        const poolForBC = staffPool.filter(e => !assignedForDay.has(e.id) && isEligibleForShifts(e, dateKey, ['B', 'C']));
         let candidatesBC = pickBestCandidates(poolForBC, numBC, 2, baseTarget);
         
         if (!isCriticalDay && numBC === 5 && candidatesBC.length === 5) {
@@ -606,7 +690,7 @@ export const generateSchedule = (config: SchedulingConfig, currentEmployees: Emp
         applyShifts(employees, candidatesBC, dateKey, ['B', 'C'], 2);
         candidatesBC.forEach(c => assignedForDay.add(c.id));
 
-        const poolForA = staffPool.filter(e => !assignedForDay.has(e.id));
+        const poolForA = staffPool.filter(e => !assignedForDay.has(e.id) && isEligibleForShifts(e, dateKey, ['A']));
         const candidatesA = pickBestCandidates(poolForA, numA, 1, baseTarget);
         applyShifts(employees, candidatesA, dateKey, ['A'], 1);
       }

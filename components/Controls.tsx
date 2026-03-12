@@ -349,6 +349,15 @@ const Controls: React.FC<ControlsProps> = ({
                         </h3>
                         {stats ? (
                             <div className="space-y-3 text-sm">
+                                {activeScenario && (
+                                    <div className="flex justify-between items-center bg-indigo-500/50 p-2 rounded-lg mb-2 border border-indigo-400/30">
+                                        <span className="text-indigo-100 font-bold text-xs">目前情境:</span>
+                                        <span className="font-black text-xs text-indigo-50">
+                                            {SCENARIO_DESCRIPTIONS[activeScenario] || activeScenario}
+                                            {usedTuesdayReduction && ' (週二減班)'}
+                                        </span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between items-center">
                                     <span className="text-indigo-200 font-bold">總需求:</span>
                                     <span className="font-black text-lg">{stats.totalDemand}</span>

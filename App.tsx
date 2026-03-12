@@ -135,8 +135,40 @@ const App: React.FC = () => {
                   delete newShifts[key];
                   delete newManualEntries[key];
               } else if (mode === 'generated') {
-                  if (Array.isArray(cellValue) && !isManual) {
-                      delete newShifts[key];
+                  if (Array.isArray(cellValue)) {
+                      if (isManual === true) {
+                          // Backward compatibility heuristic:
+                          // If the cell contains Xa, Xb, or Xc, it's likely the user manually added X, and the system added A, B, C.
+                          // So we only keep Xa, Xb, Xc.
+                          // If it doesn't contain X, the user manually added A, B, C, so we keep them.
+                          const hasX = cellValue.some(s => s === 'Xa' || s === 'Xb' || s === 'Xc');
+                          if (hasX) {
+                              const xShifts = cellValue.filter(s => s === 'Xa' || s === 'Xb' || s === 'Xc');
+                              newShifts[key] = xShifts;
+                          }
+                      } else if (Array.isArray(isManual)) {
+                          const manualShifts = cellValue.filter(s => isManual.includes(s));
+                          if (manualShifts.length > 0) {
+                              newShifts[key] = manualShifts;
+                          } else {
+                              delete newShifts[key];
+                              delete newManualEntries[key];
+                          }
+                      } else {
+                          // Not manual at all, but let's preserve Xa, Xb, Xc just in case
+                          const xShifts = cellValue.filter(s => s === 'Xa' || s === 'Xb' || s === 'Xc');
+                          if (xShifts.length > 0) {
+                              newShifts[key] = xShifts;
+                          } else {
+                              delete newShifts[key];
+                              delete newManualEntries[key];
+                          }
+                      }
+                  } else {
+                      if (!isManual) {
+                          delete newShifts[key];
+                          delete newManualEntries[key];
+                      }
                   }
               }
           });
@@ -183,7 +215,14 @@ const App: React.FC = () => {
                   delete newManualEntries[dateKey];
               } else {
                   newShifts[dateKey] = newVal;
-                  newManualEntries[dateKey] = true;
+                  if (Array.isArray(newManualEntries[dateKey])) {
+                      const newManual = (newManualEntries[dateKey] as string[]).filter(s => newVal.includes(s as ShiftType));
+                      if (newManual.length === 0) {
+                          delete newManualEntries[dateKey];
+                      } else {
+                          newManualEntries[dateKey] = newManual;
+                      }
+                  }
               }
           } else {
               delete newShifts[dateKey];
@@ -212,16 +251,44 @@ const App: React.FC = () => {
                   currentArr = [...currentVal];
               }
 
+              let existingManual: string[] = [];
+              if (Array.isArray(newManualEntries[dateKey])) {
+                  existingManual = [...(newManualEntries[dateKey] as string[])];
+              } else if (newManualEntries[dateKey] === true) {
+                  existingManual = Array.isArray(currentVal) ? [...currentVal] : [];
+              }
+
               if (currentArr.includes(finalShift)) {
                   currentArr = currentArr.filter(s => s !== finalShift);
+                  existingManual = existingManual.filter(s => s !== finalShift);
               } else {
                   currentArr.push(finalShift);
-                  if (finalShift === 'Xa') currentArr = currentArr.filter(s => s !== 'A');
-                  if (finalShift === 'A') currentArr = currentArr.filter(s => s !== 'Xa');
-                  if (finalShift === 'Xb') currentArr = currentArr.filter(s => s !== 'B');
-                  if (finalShift === 'B') currentArr = currentArr.filter(s => s !== 'Xb');
-                  if (finalShift === 'Xc') currentArr = currentArr.filter(s => s !== 'C');
-                  if (finalShift === 'C') currentArr = currentArr.filter(s => s !== 'Xc');
+                  existingManual.push(finalShift);
+
+                  if (finalShift === 'Xa') {
+                      currentArr = currentArr.filter(s => s !== 'A');
+                      existingManual = existingManual.filter(s => s !== 'A');
+                  }
+                  if (finalShift === 'A') {
+                      currentArr = currentArr.filter(s => s !== 'Xa');
+                      existingManual = existingManual.filter(s => s !== 'Xa');
+                  }
+                  if (finalShift === 'Xb') {
+                      currentArr = currentArr.filter(s => s !== 'B');
+                      existingManual = existingManual.filter(s => s !== 'B');
+                  }
+                  if (finalShift === 'B') {
+                      currentArr = currentArr.filter(s => s !== 'Xb');
+                      existingManual = existingManual.filter(s => s !== 'Xb');
+                  }
+                  if (finalShift === 'Xc') {
+                      currentArr = currentArr.filter(s => s !== 'C');
+                      existingManual = existingManual.filter(s => s !== 'C');
+                  }
+                  if (finalShift === 'C') {
+                      currentArr = currentArr.filter(s => s !== 'Xc');
+                      existingManual = existingManual.filter(s => s !== 'Xc');
+                  }
 
                   const sortOrder: Record<string, number> = { 'A':1, 'Xa':1, 'B':2, 'Xb':2, 'C':3, 'Xc':3 };
                   currentArr.sort((a, b) => (sortOrder[a] || 99) - (sortOrder[b] || 99));
@@ -232,7 +299,11 @@ const App: React.FC = () => {
                   delete newManualEntries[dateKey];
               } else {
                   newShifts[dateKey] = currentArr;
-                  newManualEntries[dateKey] = true;
+                  if (existingManual.length === 0) {
+                      delete newManualEntries[dateKey];
+                  } else {
+                      newManualEntries[dateKey] = existingManual;
+                  }
               }
           }
       }

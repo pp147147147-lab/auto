@@ -15,8 +15,8 @@ export interface Employee {
   shifts: Record<string, CellData>; 
   
   // Track which dates were manually modified by the user
-  // dateKey -> true
-  manualEntries?: Record<string, boolean>;
+  // dateKey -> true or array of manual shifts
+  manualEntries?: Record<string, boolean | string[]>;
 
   // Custom target override (optional). If null, use calculated default.
   customTarget?: number;
@@ -32,6 +32,7 @@ export enum ThursdayScenario {
   B = 'B', // A=5, B=4
   C = 'C', // A=4, B=4
   C_Plus_Tue = 'C_Plus_Tue', // A=4, B=4 + Tue Reduced
+  D = 'D', // A=5, B=5 + Tue Reduced (A=4, B=4, C=4)
 }
 
 export interface SchedulingConfig {
